@@ -1,30 +1,50 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
+// Vardiya Takip - Temel Widget Testi
+// Not: Uygulama Firebase gerektirdiğinden tam entegrasyon testleri
+// ayrı bir ortamda yapılmalıdır.
 
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-
 import 'package:flutter_application_1/main.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  test('ShiftCalculator - 12/24 sistemi doğru hesaplıyor', () {
+    final calc = ShiftCalculator(
+      DateTime(2024, 1, 1),
+      VardiyaSistemi.sistem12_24,
+    );
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    // Gün 0 → Gündüz
+    expect(calc.getShiftType(DateTime(2024, 1, 1)), contains('Gündüz'));
+    // Gün 1 → Gece
+    expect(calc.getShiftType(DateTime(2024, 1, 2)), contains('Gece'));
+    // Gün 2 → Tatil
+    expect(calc.getShiftType(DateTime(2024, 1, 3)), contains('Tatil'));
+    // Gün 3 → tekrar Gündüz (döngü)
+    expect(calc.getShiftType(DateTime(2024, 1, 4)), contains('Gündüz'));
+  });
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
+  test('ShiftCalculator - 24/48 sistemi doğru hesaplıyor', () {
+    final calc = ShiftCalculator(
+      DateTime(2024, 1, 1),
+      VardiyaSistemi.sistem24_48,
+    );
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    expect(calc.getShiftType(DateTime(2024, 1, 1)), contains('Nöbet'));
+    expect(calc.getShiftType(DateTime(2024, 1, 2)), contains('Tatil'));
+    expect(calc.getShiftType(DateTime(2024, 1, 3)), contains('Tatil'));
+    expect(calc.getShiftType(DateTime(2024, 1, 4)), contains('Nöbet'));
+  });
+
+  test('ShiftCalculator - özel döngü doğru çalışıyor', () {
+    final calc = ShiftCalculator(
+      DateTime(2024, 1, 1),
+      VardiyaSistemi.ozelDuzen,
+      ozelDongu: ['Gündüz', 'Gece', 'Tatil', 'Tatil'],
+    );
+
+    expect(calc.getShiftType(DateTime(2024, 1, 1)), contains('Gündüz'));
+    expect(calc.getShiftType(DateTime(2024, 1, 2)), contains('Gece'));
+    expect(calc.getShiftType(DateTime(2024, 1, 3)), contains('Tatil'));
+    expect(calc.getShiftType(DateTime(2024, 1, 4)), contains('Tatil'));
+    expect(calc.getShiftType(DateTime(2024, 1, 5)), contains('Gündüz')); // döngü
   });
 }

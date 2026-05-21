@@ -1,26 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#1A1A2E"
     android:gravity="center"
     android:orientation="vertical"
-    android:padding="8dp">
+    android:padding="16dp">
 
     <TextView
+        android:id="@+id/widget_label"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Bugünkü Vardiyam"
+        android:text="BUGÜNKÜ VARDİYAM"
+        android:textColor="#AAAAAA"
+        android:textSize="9sp"
+        android:letterSpacing="0.15"
+        android:textAllCaps="true" />
+
+    <TextView
+        android:id="@+id/widget_shift_type"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:text="☀️ Gündüz"
         android:textColor="#FFFFFF"
-        android:textSize="12sp"
+        android:textSize="22sp"
         android:textStyle="bold" />
 
     <TextView
-        android:id="@+id/widget_vardiya_text"
+        android:id="@+id/widget_time_range"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="4dp"
-        android:text="Yükleniyor..."
-        android:textColor="#4CA1AF"
-        android:textSize="18sp"
-        android:textStyle="bold" />
+        android:text="08:00 - 20:00"
+        android:textColor="#CCCCCC"
+        android:textSize="13sp" />
+
 </LinearLayout>

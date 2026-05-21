@@ -13,7 +13,9 @@ import 'package:table_calendar/table_calendar.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
-//import 'package:home_widget/home_widget.dart';
+
+// MethodChannel ile native Android widget güncelleme
+const _widgetChannel = MethodChannel('com.vardiya.widget/update');
 
 // Bildirim eklentisini global olarak tanımlıyoruz
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
@@ -332,6 +334,26 @@ class _AnaEkranState extends State<AnaEkran> {
     }
   }
 
+  // Widget'ı MethodChannel üzerinden günceller (home_widget paketi gerekmez)
+  Future<void> _widgetGuncelle(String vardiyaMetni) async {
+    try {
+      String tur = 'tatil';
+      if (vardiyaMetni.contains('Gündüz')) tur = 'gunduz';
+      else if (vardiyaMetni.contains('Gece')) tur = 'gece';
+      else if (vardiyaMetni.contains('Nöbet')) tur = 'nobet';
+
+      // Saatleri içeren kısayol metin (örn: "08:00 - 20:00")
+      String kisaMetin = vardiyaMetni.replaceAll('\n', ' ');
+
+      await _widgetChannel.invokeMethod('updateWidget', {
+        'vardiya': kisaMetin,
+        'tur': tur,
+      });
+    } catch (e) {
+      // Widget güncellenemedi (platform dışı ya da widget eklenmemiş) — sessizce geç
+    }
+  }
+
   Future<void> _bildirimIzniIste() async {
     await flutterLocalNotificationsPlugin
         .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
@@ -369,8 +391,7 @@ class _AnaEkranState extends State<AnaEkran> {
       _gununVardiyasi = calculator!.getShiftType(_secilenGun);
     });
     // --- WIDGET'A VERİ GÖNDERME KISMI ---
-    //HomeWidget.saveWidgetData<String>('vardiya_text', _gununVardiyasi.replaceAll('\n', ' '));
-   // HomeWidget.updateWidget(name: 'VardiyaWidgetProvider');
+    _widgetGuncelle(_gununVardiyasi);
 
     WidgetsBinding.instance.addPostFrameCallback((_) => _bugunuOrtala());
   }
@@ -520,8 +541,7 @@ class _AnaEkranState extends State<AnaEkran> {
                           calculator = ShiftCalculator(geciciTarih, geciciSistem, ozelDongu: _kayitliOzelDongu);
                           _gununVardiyasi = calculator!.getShiftType(_secilenGun);
                         });
-                       // HomeWidget.saveWidgetData<String>('vardiya_text', _gununVardiyasi.replaceAll('\n', ' '));
-                       // HomeWidget.updateWidget(name: 'VardiyaWidgetProvider');
+                        _widgetGuncelle(_gununVardiyasi);
 
                         _gelecekBildirimleriKur();
                         if (mounted) Navigator.pop(context);
