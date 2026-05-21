@@ -197,7 +197,7 @@ class _AnaEkranState extends State<AnaEkran> {
           )
         )
       );
-
+      // arda 
       if (suAnkiHafta.length == 7) {
         satirlar.add(pw.TableRow(children: suAnkiHafta));
         suAnkiHafta = [];
