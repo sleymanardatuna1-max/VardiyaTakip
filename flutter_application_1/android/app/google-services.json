@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1027627935829",
+    "project_id": "vardiya-takvimi-fc7eb",
+    "storage_bucket": "vardiya-takvimi-fc7eb.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1027627935829:android:4cafbe0096e7e5d57e4cdc",
+        "android_client_info": {
+          "package_name": "com.example.flutter_application_1"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDabo1CY81mZ5r0foV8TMmnTHzEuaFRM5c"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
