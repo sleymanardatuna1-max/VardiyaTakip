@@ -335,24 +335,39 @@ class _AnaEkranState extends State<AnaEkran> {
   }
 
   // Widget'ı MethodChannel üzerinden günceller (home_widget paketi gerekmez)
-  Future<void> _widgetGuncelle(String vardiyaMetni) async {
-    try {
+  // Eski _widgetGuncelle yerine bunu kullanıyoruz
+Future<void> _widgetGuncelle() async {
+  if (calculator == null) return;
+
+  try {
+    Map<String, dynamic> gelecekVardiyalar = {};
+    DateTime bugun = DateTime.now();
+
+    // Bugünden itibaren 30 günlük vardiya haritası çıkarıyoruz
+    for (int i = 0; i < 30; i++) {
+      DateTime hedef = bugun.add(Duration(days: i));
+      
+      // Tarihi YYYY-MM-DD formatına çeviriyoruz (Örn: 2026-05-24)
+      String tarihKey = "${hedef.year}-${hedef.month.toString().padLeft(2, '0')}-${hedef.day.toString().padLeft(2, '0')}";
+      
+      String vardiyaMetni = calculator!.getShiftType(hedef);
       String tur = 'tatil';
       if (vardiyaMetni.contains('Gündüz')) tur = 'gunduz';
       else if (vardiyaMetni.contains('Gece')) tur = 'gece';
       else if (vardiyaMetni.contains('Nöbet')) tur = 'nobet';
 
-      // Saatleri içeren kısayol metin (örn: "08:00 - 20:00")
-      String kisaMetin = vardiyaMetni.replaceAll('\n', ' ');
-
-      await _widgetChannel.invokeMethod('updateWidget', {
-        'vardiya': kisaMetin,
-        'tur': tur,
-      });
-    } catch (e) {
-      // Widget güncellenemedi (platform dışı ya da widget eklenmemiş) — sessizce geç
+      gelecekVardiyalar[tarihKey] = {
+        'vardiya': vardiyaMetni.replaceAll('\n', ' '),
+        'tur': tur
+      };
     }
+
+    // Haritayı tek seferde Native tarafa yolluyoruz
+    await _widgetChannel.invokeMethod('updateWidgetData', gelecekVardiyalar);
+  } catch (e) {
+    // Widget güncellenemedi (platform dışı ya da widget eklenmemiş) — sessizce geç
   }
+}
 
   Future<void> _bildirimIzniIste() async {
     await flutterLocalNotificationsPlugin
@@ -391,7 +406,7 @@ class _AnaEkranState extends State<AnaEkran> {
       _gununVardiyasi = calculator!.getShiftType(_secilenGun);
     });
     // --- WIDGET'A VERİ GÖNDERME KISMI ---
-    _widgetGuncelle(_gununVardiyasi);
+    _widgetGuncelle();
 
     WidgetsBinding.instance.addPostFrameCallback((_) => _bugunuOrtala());
   }
@@ -541,7 +556,7 @@ class _AnaEkranState extends State<AnaEkran> {
                           calculator = ShiftCalculator(geciciTarih, geciciSistem, ozelDongu: _kayitliOzelDongu);
                           _gununVardiyasi = calculator!.getShiftType(_secilenGun);
                         });
-                        _widgetGuncelle(_gununVardiyasi);
+                        _widgetGuncelle();
 
                         _gelecekBildirimleriKur();
                         if (mounted) Navigator.pop(context);

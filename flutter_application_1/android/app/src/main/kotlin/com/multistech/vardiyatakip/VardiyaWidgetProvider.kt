@@ -1,13 +1,28 @@
-package com.example.flutter_application_1
+package com.multistech.vardiyatakip
 
 import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.widget.RemoteViews
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 class VardiyaWidgetProvider : AppWidgetProvider() {
+
+    // EKLENEN KISIM: Gece 00:00'da gün değişimini yakalar ve widget'ı tetikler
+    override fun onReceive(context: Context, intent: Intent) {
+        super.onReceive(context, intent)
+        if (intent.action == Intent.ACTION_DATE_CHANGED || intent.action == Intent.ACTION_TIMEZONE_CHANGED) {
+            val appWidgetManager = AppWidgetManager.getInstance(context)
+            val componentName = ComponentName(context, VardiyaWidgetProvider::class.java)
+            val appWidgetIds = appWidgetManager.getAppWidgetIds(componentName)
+            onUpdate(context, appWidgetManager, appWidgetIds)
+        }
+    }
 
     override fun onUpdate(context: Context, appWidgetManager: AppWidgetManager, appWidgetIds: IntArray) {
         for (appWidgetId in appWidgetIds) {
@@ -17,9 +32,16 @@ class VardiyaWidgetProvider : AppWidgetProvider() {
 
     companion object {
         fun updateAppWidget(context: Context, appWidgetManager: AppWidgetManager, appWidgetId: Int) {
-            val prefs = context.getSharedPreferences("VardiyaWidgetPrefs", Context.MODE_PRIVATE)
-            val vardiyaText = prefs.getString("vardiya_text", "Uygulama bekleniyor...") ?: "Uygulama bekleniyor..."
-            val vardiyaTuru = prefs.getString("vardiya_tur", "tatil") ?: "tatil"
+            // EKLENEN KISIM: Bugünün tarihini (Örn: 2026-05-24) formatında alıyoruz
+            val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+            val bugunStr = sdf.format(Date())
+
+            // EKLENEN KISIM: 30 günlük listemizin olduğu yeni hafızaya bağlanıyoruz
+            val prefs = context.getSharedPreferences("VardiyaWidgetData", Context.MODE_PRIVATE)
+            
+            // Bugünün tarihine denk gelen vardiyayı çekiyoruz
+            val vardiyaText = prefs.getString("${bugunStr}_vardiya", "Hesaplanıyor...") ?: "Hesaplanıyor..."
+            val vardiyaTuru = prefs.getString("${bugunStr}_tur", "tatil") ?: "tatil"
 
             val views = RemoteViews(context.packageName, R.layout.widget_layout)
 

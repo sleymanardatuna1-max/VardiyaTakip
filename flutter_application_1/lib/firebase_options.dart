@@ -17,10 +17,7 @@ import 'package:flutter/foundation.dart'
 class DefaultFirebaseOptions {
   static FirebaseOptions get currentPlatform {
     if (kIsWeb) {
-      throw UnsupportedError(
-        'DefaultFirebaseOptions have not been configured for web - '
-        'you can reconfigure this by running the FlutterFire CLI again.',
-      );
+      return web;
     }
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
@@ -28,15 +25,9 @@ class DefaultFirebaseOptions {
       case TargetPlatform.iOS:
         return ios;
       case TargetPlatform.macOS:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for macos - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
+        return macos;
       case TargetPlatform.windows:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for windows - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
+        return windows;
       case TargetPlatform.linux:
         throw UnsupportedError(
           'DefaultFirebaseOptions have not been configured for linux - '
@@ -51,7 +42,7 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions android = FirebaseOptions(
     apiKey: 'AIzaSyDabo1CY81mZ5r0foV8TMmnTHzEuaFRM5c',
-    appId: '1:1027627935829:android:4cafbe0096e7e5d57e4cdc',
+    appId: '1:1027627935829:android:b98984238b1cc0ea7e4cdc',
     messagingSenderId: '1027627935829',
     projectId: 'vardiya-takvimi-fc7eb',
     storageBucket: 'vardiya-takvimi-fc7eb.firebasestorage.app',
@@ -59,10 +50,44 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions ios = FirebaseOptions(
     apiKey: 'AIzaSyCdhDnujmp5J13__qmhj_zwm_N7alhsPYg',
+    appId: '1:1027627935829:ios:6c4708336c83ad407e4cdc',
+    messagingSenderId: '1027627935829',
+    projectId: 'vardiya-takvimi-fc7eb',
+    storageBucket: 'vardiya-takvimi-fc7eb.firebasestorage.app',
+    androidClientId: '1027627935829-mpq1mrku44jkee29bu037sm045jbtgqj.apps.googleusercontent.com',
+    iosClientId: '1027627935829-mriq5g63e4ebultibo0dcas520d79avj.apps.googleusercontent.com',
+    iosBundleId: 'com.multistech.vardiyatakip',
+  );
+
+  static const FirebaseOptions web = FirebaseOptions(
+    apiKey: 'AIzaSyCtx4NPcCCRKm2NcMQptEl-EXeU7ZYCOAs',
+    appId: '1:1027627935829:web:d83e48fd49c067537e4cdc',
+    messagingSenderId: '1027627935829',
+    projectId: 'vardiya-takvimi-fc7eb',
+    authDomain: 'vardiya-takvimi-fc7eb.firebaseapp.com',
+    storageBucket: 'vardiya-takvimi-fc7eb.firebasestorage.app',
+    measurementId: 'G-JY604M5PH0',
+  );
+
+  static const FirebaseOptions macos = FirebaseOptions(
+    apiKey: 'AIzaSyCdhDnujmp5J13__qmhj_zwm_N7alhsPYg',
     appId: '1:1027627935829:ios:915fcb852cf029ed7e4cdc',
     messagingSenderId: '1027627935829',
     projectId: 'vardiya-takvimi-fc7eb',
     storageBucket: 'vardiya-takvimi-fc7eb.firebasestorage.app',
+    androidClientId: '1027627935829-mpq1mrku44jkee29bu037sm045jbtgqj.apps.googleusercontent.com',
+    iosClientId: '1027627935829-srk8iibsfib2s74tilpc0n5egplhh4sb.apps.googleusercontent.com',
     iosBundleId: 'com.example.flutterApplication1',
   );
+
+  static const FirebaseOptions windows = FirebaseOptions(
+    apiKey: 'AIzaSyCtx4NPcCCRKm2NcMQptEl-EXeU7ZYCOAs',
+    appId: '1:1027627935829:web:a2f4d37e3ffe78917e4cdc',
+    messagingSenderId: '1027627935829',
+    projectId: 'vardiya-takvimi-fc7eb',
+    authDomain: 'vardiya-takvimi-fc7eb.firebaseapp.com',
+    storageBucket: 'vardiya-takvimi-fc7eb.firebasestorage.app',
+    measurementId: 'G-TH8TPF2RQD',
+  );
+
 }

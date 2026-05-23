@@ -1,37 +1,49 @@
+import java.util.Properties
+import java.io.FileInputStream
+
 plugins {
     id("com.android.application")
     // START: FlutterFire Configuration
     id("org.jetbrains.kotlin.android")
-   
     // END: FlutterFire Configuration
-
-    // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
+    // Firebase Google Services Eklentisi
+    id("com.google.gms.google-services")
+}
+
+val keystoreProperties = Properties()
+val keystorePropertiesFile = rootProject.file("key.properties")
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(FileInputStream(keystorePropertiesFile))
 }
 
 android {
-    namespace = "com.example.flutter_application_1"
+    namespace = "com.multistech.vardiyatakip"
     compileSdk = 36
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
-    isCoreLibraryDesugaringEnabled = true // Başına 'is' ekledik ve baş harfini büyüttük
-    sourceCompatibility = JavaVersion.VERSION_1_8
-    targetCompatibility = JavaVersion.VERSION_1_8
-}
-dependencies {
-    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.3")
-}
+        isCoreLibraryDesugaringEnabled = true
+        sourceCompatibility = JavaVersion.VERSION_1_8
+        targetCompatibility = JavaVersion.VERSION_1_8
+    }
+
     kotlinOptions {
-    // 17 yazan yeri 1.8 yapıyoruz ki Java ile aynı dili konuşsunlar
-    jvmTarget = "1.8" 
-}
+        jvmTarget = "1.8"
+    }
+
+    // İMZA AYARLARI (KOTLIN DSL YAPISINA UYGUN)
+    signingConfigs {
+        create("release") {
+            keyAlias = keystoreProperties.getProperty("keyAlias")
+            keyPassword = keystoreProperties.getProperty("keyPassword")
+            storeFile = keystoreProperties.getProperty("storeFile")?.let { file(it) }
+            storePassword = keystoreProperties.getProperty("storePassword")
+        }
+    }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "com.example.flutter_application_1"
-        // You can update the following values to match your application needs.
-        // For more information, see: https://flutter.dev/to/review-gradle-config.
+        applicationId = "com.multistech.vardiyatakip"
         minSdk = flutter.minSdkVersion
         targetSdk = 36
         versionCode = flutter.versionCode
@@ -40,9 +52,7 @@ dependencies {
 
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.getByName("release")
         }
     }
 }
@@ -50,5 +60,7 @@ dependencies {
 flutter {
     source = "../.."
 }
-// Dosyanın en sonuna, süslü parantezlerin dışına bunu ekle:
-apply(plugin = "com.google.gms.google-services")
+
+dependencies {
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.3")
+}
