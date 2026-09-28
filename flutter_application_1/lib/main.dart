@@ -13,6 +13,9 @@ import 'package:table_calendar/table_calendar.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
+import 'package:http/http.dart' as http;
 
 // MethodChannel ile native Android widget güncelleme
 const _widgetChannel = MethodChannel('com.vardiya.widget/update');
@@ -81,6 +84,7 @@ class AnaEkran extends StatefulWidget {
 
 class _AnaEkranState extends State<AnaEkran> {
   bool _aylikGorunumMu = false;
+  bool _fotoAnalizEdiliyor = false;
   ShiftCalculator? calculator;
   DateTime _secilenGun = DateTime.now();
   String _gununVardiyasi = "Hesaplanıyor...";
@@ -112,7 +116,118 @@ class _AnaEkranState extends State<AnaEkran> {
     _hafizadanAyarlariYukle();
     _bildirimIzniIste();
   } 
+Future<void> _fotograftanVardiyaCikar() async {
+    final ImagePicker picker = ImagePicker();
+    
+    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+    if (image == null) return;
 
+    setState(() => _fotoAnalizEdiliyor = true);
+
+    try {
+      // ÜCRETSİZ PROJEDEN ALDIĞIN YENİ ANAHTARI BURAYA YAPIŞTIR
+      const apiKey = 'AQ.Ab8RN6KbQJQPqCGDzJkD49h5j0ZcTnj4bZb00W9MBW4um_-oQw'; 
+
+      final imageBytes = await File(image.path).readAsBytes();
+      final base64Image = base64Encode(imageBytes); 
+      final mimeType = image.path.toLowerCase().endsWith('.png') ? 'image/png' : 'image/jpeg';
+
+      final url = Uri.parse('https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=$apiKey');
+
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          "contents": [
+            {
+              "parts": [
+                {
+                  "text": "Sen uzman bir insan kaynakları asistanısın. Bu fotoğraf bir vardiya çizelgesidir. Her iş yerinin formatı farklı olabilir, bu yüzden genel bir mantıkla analiz et:\n1. Tablodaki en belirgin veya işaretlenmiş kişinin çalışma döngüsünü tespit et.\n2. Yazılı olan çalışma saatlerini analiz et.\n3. Saatler sabah başlayıp akşamüstü bitiyorsa (örn: 08:00-16:00, 09:00-17:00) bunu 'Gündüz' olarak sınıflandır.\n4. Saatler akşam veya geceyi kapsıyorsa (örn: 16:00-00:00, 20:00-08:00, 00:00-08:00) bunu 'Gece' olarak sınıflandır.\n5. Çalışılmayan, OFF, İzin veya X olan günleri 'Tatil' olarak sınıflandır.\nBana SADECE elde ettiğin bu döngüyü aralarında virgül olacak şekilde liste halinde ver. Başka hiçbir kelime, saat veya açıklama yazma.\nÖrnek Çıktı: Gündüz, Gündüz, Gece, Gece, Tatil, Tatil"
+                },
+                {
+                  "inline_data": {
+                    "mime_type": mimeType,
+                    "data": base64Image
+                  }
+                }
+              ]
+            }
+          ]
+        }),
+      );
+
+      // Asenkron işlem sonrası sayfanın hala açık olup olmadığını kontrol ediyoruz
+      if (!mounted) return; 
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        String aiYaniti = data['candidates'][0]['content']['parts'][0]['text'].toString().trim();
+
+        if (aiYaniti.contains("HATA") || aiYaniti.isEmpty) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Vardiya döngüsü anlaşılamadı. Daha net bir fotoğraf seçin.')),
+          );
+          return;
+        }
+
+        // Yapay zekanın bulduğu döngüyü listeye çeviriyoruz
+        List<String> cikarilanDongu = aiYaniti.split(',').map((e) => e.trim().replaceAll("'", "").replaceAll('"', '')).toList();
+
+        // ---------------- YENİ EKLENEN KISIM: TARİH SEÇİCİ ----------------
+        DateTime? secilenTarih = await showDatePicker(
+          context: context,
+          initialDate: DateTime.now(),
+          firstDate: DateTime(2023),
+          lastDate: DateTime(2030),
+          helpText: 'VARDIYANIN BAŞLADIĞI İLK GÜNÜ SEÇİN',
+          cancelText: 'İPTAL',
+          confirmText: 'TAKVİME UYGULA',
+        );
+
+        if (secilenTarih == null) {
+          // Kullanıcı tarih seçmeden iptal basarsa işlemi durduruyoruz
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Tarih seçilmediği için işlem iptal edildi.')),
+          );
+          return;
+        }
+        // ------------------------------------------------------------------
+
+        final prefs = await SharedPreferences.getInstance();
+        
+        // Artık DateTime.now() yerine kullanıcının seçtiği tarihi (secilenTarih) kaydediyoruz
+        await prefs.setString('baslangic_tarihi', secilenTarih.toIso8601String());
+        await prefs.setInt('vardiya_sistemi', VardiyaSistemi.ozelDuzen.index);
+        await prefs.setString('ozel_dongu', jsonEncode(cikarilanDongu));
+
+        setState(() {
+          _kayitliOzelDongu = List.from(cikarilanDongu);
+          calculator = ShiftCalculator(secilenTarih, VardiyaSistemi.ozelDuzen, ozelDongu: _kayitliOzelDongu);
+          _gununVardiyasi = calculator!.getShiftType(_secilenGun);
+        });
+        
+        _widgetGuncelle();
+        _gelecekBildirimleriKur();
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Takvim fotoğraftan başarıyla oluşturuldu!'), backgroundColor: Colors.green),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Google API Hatası veya Sunucu Yoğunluğu.'), backgroundColor: Colors.red),
+        );
+      }
+
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Beklenmeyen bir hata oluştu.'), backgroundColor: Colors.red),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _fotoAnalizEdiliyor = false);
+    }
+  }
   Future<void> _aylikTakvimiPdfYapVePaylas() async {
     if (calculator == null) return;
 
@@ -445,6 +560,28 @@ Future<void> _widgetGuncelle() async {
                   const Text("Vardiya Ayarları", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 25),
                   
+                  SizedBox(
+  width: double.infinity,
+  height: 50,
+  child: ElevatedButton.icon(
+    style: ElevatedButton.styleFrom(
+      backgroundColor: Colors.purpleAccent,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15))
+    ),
+    icon: _fotoAnalizEdiliyor 
+      ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+      : const Icon(Icons.camera_alt, color: Colors.white),
+    label: Text(
+      _fotoAnalizEdiliyor ? "Fotoğraf Analiz Ediliyor..." : "Hızlı Ekle: Çizelge Fotoğrafı Yükle", 
+      style: const TextStyle(fontSize: 15, color: Colors.white, fontWeight: FontWeight.bold)
+    ),
+    onPressed: _fotoAnalizEdiliyor ? null : () async {
+      Navigator.pop(context); // Ayarlar menüsünü kapat
+      await _fotograftanVardiyaCikar(); // Galeriyi aç ve AI'ı çalıştır
+    },
+  ),
+),
+const SizedBox(height: 25),
                   Text("1. Vardiya Sisteminizi Seçin", style: TextStyle(color: Colors.grey.shade700, fontWeight: FontWeight.w600)),
                   const SizedBox(height: 8),
                   Container(
