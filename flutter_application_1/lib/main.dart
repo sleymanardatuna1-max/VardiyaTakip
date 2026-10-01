@@ -126,7 +126,7 @@ Future<void> _fotograftanVardiyaCikar() async {
 
     try {
       // ÜCRETSİZ PROJEDEN ALDIĞIN YENİ ANAHTARI BURAYA YAPIŞTIR
-      const apiKey = 'AQ.Ab8RN6KbQJQPqCGDzJkD49h5j0ZcTnj4bZb00W9MBW4um_-oQw'; 
+      const apiKey = 'BURAYA API KEY'; 
 
       final imageBytes = await File(image.path).readAsBytes();
       final base64Image = base64Encode(imageBytes); 
